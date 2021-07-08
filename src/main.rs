@@ -115,6 +115,7 @@ fn status() {
     let mut limiter = TimeLimiter::new();
     let today = get_today();
     let today_naive = today.naive_local();
+    let now = Local::now();
 
     limiter.load_extension(today_naive).unwrap();
     let seconds_today = limiter.query_aw(today).unwrap() as i64;
@@ -123,18 +124,46 @@ fn status() {
     let seconds_extended_limit = (DEFAULT_TIME + limiter.extension) as i64;
 
     println!("Active time: {}", seconds_to_string(seconds_today));
-    println!(
-        "Default limit: {} ({}%, {} left)",
-        seconds_to_string(seconds_limit),
-        seconds_today * 100 / seconds_limit,
-        seconds_to_string(seconds_limit - seconds_today),
-    );
-    println!(
-        "Extended limit: {} ({}%, {} left)",
-        seconds_to_string(seconds_extended_limit),
-        seconds_today * 100 / seconds_extended_limit,
-        seconds_to_string(seconds_extended_limit - seconds_today),
-    );
+
+    if seconds_today < seconds_limit {
+        println!(
+            "Default limit: {} ({}%, {} left, eta {})",
+            seconds_to_string(seconds_limit),
+            seconds_today * 100 / seconds_limit,
+            seconds_to_string(seconds_limit - seconds_today),
+            now
+                .add(chrono::Duration::seconds(seconds_limit - seconds_today))
+                .format("%l:%M:%S %P"),
+        );
+    } else {
+        println!(
+            "Default limit: {} ({}%, {} over)",
+            seconds_to_string(seconds_limit),
+            seconds_today * 100 / seconds_limit,
+            seconds_to_string(seconds_today - seconds_limit),
+        );
+    }
+
+    if limiter.extension != 0.0 {
+        if seconds_today < seconds_extended_limit {
+            println!(
+                "Extended limit: {} ({}%, {} left, eta {})",
+                seconds_to_string(seconds_extended_limit),
+                seconds_today * 100 / seconds_extended_limit,
+                seconds_to_string(seconds_extended_limit - seconds_today),
+                now
+                    .add(chrono::Duration::seconds(seconds_extended_limit - seconds_today))
+                    .format("%l:%M:%S %P"),
+            );
+        } else {
+            println!(
+                "Extended limit: {} ({}%, {} over)",
+                seconds_to_string(seconds_extended_limit),
+                seconds_today * 100 / seconds_extended_limit,
+                seconds_to_string(seconds_today - seconds_extended_limit),
+            );
+        }
+    }
 }
 
 fn get_today() -> Date<Local> {
