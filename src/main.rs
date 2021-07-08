@@ -170,7 +170,13 @@ fn seconds_to_string(mut seconds: i64) -> String {
         output += &format!("{}m", minutes);
     }
 
-    output += &format!("{}s", seconds);
+    if seconds > 0 {
+        output += &format!("{}s", seconds);
+    }
+
+    if hours == 0 && minutes == 0 && seconds == 0 {
+        output += "0s";
+    }
 
     output
 }
@@ -211,6 +217,8 @@ impl TimeLimiter {
 
                 if self.extension > 0.0 {
                     message = "Reached extended active time limit for today";
+                } else if self.extension < 0.0 {
+                    message = "Reached reduced active time limit for today";
                 } else {
                     message = "Reached default active time limit for today";
                 }
