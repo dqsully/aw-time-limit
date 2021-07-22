@@ -300,6 +300,7 @@ impl TimeLimiter {
 
         if let Ok(ext_bytes) = fs::read(filepath) {
             let ext_text = String::from_utf8(ext_bytes)?;
+            let mut found_for_date = false;
 
             for line in ext_text.lines() {
                 let (date_text, seconds_text) = match line.split_once(' ') {
@@ -312,8 +313,13 @@ impl TimeLimiter {
 
                 if date == for_date {
                     self.extension = seconds;
+                    found_for_date = true;
                     break;
                 }
+            }
+
+            if !found_for_date {
+                self.extension = 0.0;
             }
         } else {
             self.extension = 0.0;
